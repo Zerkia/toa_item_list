@@ -16,6 +16,7 @@ export default function TeamSelect({ open, onSelectTeam }) {
         },
       }}
     >
+      {/* Add name to TeamSelect localStorage so that I can track changes to an item, in case of people deleting others items */}
       <DialogTitle sx={{ color: 'white', textAlign: 'center' }}>Select Your Team</DialogTitle>
       <DialogActions sx={{ justifyContent: 'space-evenly', mt: 2 }}>
         <Button 

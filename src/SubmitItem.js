@@ -72,6 +72,9 @@ export default function SubmitItem({ open, onClose, onSubmit }) {
           }}
         />
       </DialogContent>
+
+      {/* TODO: Make submit button conditional between Submit and Delete button depending on if state is empty or not */}
+      {/* OPTIONAL: Add name to TeamSelect localStorage so that I can track changes to an item, in case of people deleting others items */}
       <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
         <Button 
           onClick={handleSubmit}
