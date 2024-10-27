@@ -98,12 +98,12 @@ function App() {
               flexGrow: 1,
               width: '100%',
               padding: '20px',
-              overflow: 'auto',
+              overflow: 'hidden',
             }}
           >
-            <Grid container spacing={4}>
+            <Grid container spacing={3}>
               {images.map((image) => (
-                <Grid xs={2} key={image.id} sx={{ maxWidth: '15%', maxHeight: '160px', mt: 0.5, px: 5 }}>
+                <Grid xs={2} key={image.id} sx={{ maxWidth: '15%', maxHeight: '160px', mt: 0.35, px: 5,}}>
                   <Box
                     sx={{
                       width: '100%',
