@@ -1,61 +1,14 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Box, Typography } from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import { getImage, getAllImages } from './imageImports';
+import { getAllImages } from './imageImports';
 const TeamSelect = lazy(() => import('./TeamSelect'));
 const SubmitItem = lazy(() => import('./SubmitItem'));
 import './App.css';
 import './fonts.css';
 
-const MemoizedGrid = React.memo(({ images, collectedItems, toggleCollected }) => (
-  <Grid container spacing={4}>
-    {images.map((image) => (
-      <Grid xs={2} key={image.id} sx={{ maxWidth: '15%', maxHeight: '160px', mt: 0.5, px: 5 }}>
-        <Box
-          sx={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-
-            // TODO: Add team-specific gradient via conditional rendering, either purple, orange or both, depending on condition
-            // background: collectedItems[image.id]
-            //   ? 'linear-gradient(to right, rgba(128,0,128,0.75) 50%, rgba(73, 64, 52, 1) 50%)'
-            //   : 'linear-gradient(to right, rgba(73, 64, 52, 1) 50%, rgba(255,165,0,0.75) 50%)',
-            overflow: 'hidden',
-          }}
-        >
-          <img 
-            src={image.src} 
-            alt={image.alt} 
-            style={{
-              maxWidth: '100%',
-              maxHeight: '100%',
-              paddingTop: '10px',
-              paddingBottom: '10px',
-              objectFit: 'contain',
-              opacity: collectedItems[image.id] ? 1 : 0.4,
-              transition: 'opacity 0.3s ease-in-out',
-              cursor: 'pointer',
-              userSelect: 'none',
-              WebkitUserDrag: 'none',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = collectedItems[image.id] ? '1' : '0.4'}
-            loading="lazy"
-            onClick={() => toggleCollected(image.id)}
-            draggable="false"
-            onDragStart={(e) => e.preventDefault()}
-          />
-        </Box>
-      </Grid>
-    ))}
-  </Grid>
-));
-
 function App() {
-  const [collectedItems, setCollectedItems] = useState([]);
+  const [collectedItems, setCollectedItems] = useState({});
   const [team, setTeam] = useState(null);
   const [openTeamDialog, setOpenTeamDialog] = useState(false);
   const [openItemDialog, setOpenItemDialog] = useState(false);
@@ -69,7 +22,9 @@ function App() {
     } else {
       setOpenTeamDialog(true);
     }
+  }, []);
 
+  useEffect(() => {
     const loadImages = async () => {
       const loadedImages = await getAllImages();
       setImages(loadedImages);
@@ -89,7 +44,12 @@ function App() {
   };
 
   const handleItemSubmit = (itemDetails) => {
-    setCollectedItems(prev => [...prev, selectedItemId]);
+    console.log('Item details submitted:', itemDetails);
+    // Here you would typically update your state or send data to an API
+    setCollectedItems(prev => ({
+      ...prev,
+      [selectedItemId]: true
+    }));
   };
 
   return (
@@ -141,7 +101,50 @@ function App() {
               overflow: 'auto',
             }}
           >
-            <MemoizedGrid images={images} collectedItems={collectedItems} toggleCollected={toggleCollected} />
+            <Grid container spacing={4}>
+              {images.map((image) => (
+                <Grid xs={2} key={image.id} sx={{ maxWidth: '15%', maxHeight: '160px', mt: 0.5, px: 5 }}>
+                  <Box
+                    sx={{
+                      width: '100%',
+                      height: '100%',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+
+                      // TODO: Add team-specific gradient via conditional rendering, either purple, orange or both, depending on condition
+                      // background: collectedItems[image.id]
+                      //   ? 'linear-gradient(to right, rgba(128,0,128,0.75) 50%, rgba(73, 64, 52, 1) 50%)'
+                      //   : 'linear-gradient(to right, rgba(73, 64, 52, 1) 50%, rgba(255,165,0,0.75) 50%)',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <img 
+                      src={image.src} 
+                      alt={image.alt} 
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        paddingTop: '10px',
+                        paddingBottom: '10px',
+                        objectFit: 'contain',
+                        opacity: collectedItems[image.id] ? 1 : 0.4,
+                        transition: 'opacity 0.3s ease-in-out',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        WebkitUserDrag: 'none',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                      onMouseLeave={(e) => e.currentTarget.style.opacity = collectedItems[image.id] ? '1' : '0.4'}
+                      loading="lazy"
+                      onClick={() => toggleCollected(image.id)}
+                      draggable="false"
+                      onDragStart={(e) => e.preventDefault()}
+                    />
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
           </Box>
         </Box>
 
