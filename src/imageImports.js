@@ -41,7 +41,16 @@ export const getImage = async (index) => {
   return await importImage(imageNames[index - 1]);
 };
 
-// This function will get all images
+// This function will get all images using lazy loading
 export const getAllImages = async () => {
-  return await Promise.all(imageNames.map(importImage));
+  const loadImage = async (name) => {
+    const image = await importImage(name);
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve(image);
+      img.src = image.src;
+    });
+  };
+
+  return await Promise.all(imageNames.map(loadImage));
 };
