@@ -9,14 +9,14 @@
     "@mui/material": "^6.1.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "cross-env": "^7.0.3"
+    "react-scripts": "^5.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "render-build": "npm cache clean --force && rm -rf node_modules && npm install --production --legacy-peer-deps && npm run build"
+    "render-build": "npm cache clean --force && rm -rf node_modules && npm install --legacy-peer-deps && npm run build"
   },
   "browserslist": {
     "production": [
@@ -38,8 +38,7 @@
     "ajv": "^8.0.0",
     "eslint": "^8.45.0",
     "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-react": "^7.32.2",
-    "react-scripts": "^5.0.1"
+    "eslint-plugin-react": "^7.32.2"
   },
   "engines": {
     "node": "18.x"
