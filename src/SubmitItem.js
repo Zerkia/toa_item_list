@@ -1,13 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 
-export default function SubmitItem({ open, onClose, onSubmit, itemId }) {
+export default function SubmitItem({ open, onClose, onSubmit, itemId, existingData, team }) {
   const [name, setName] = useState('');
   const [imageLink, setImageLink] = useState('');
-
+  const [errors, setErrors] = useState({ name: false, imageLink: false });
+  
   const selectedTeam = localStorage.getItem('selectedTeam');
 
-  const handleSubmit = async () => {
+  useEffect(() => {
+    if (existingData && open) {
+      if (team === 'Cinnamon Toast Crunch' && existingData.collected_ctc) {
+        setName(existingData.ctc_name || '');
+        setImageLink(existingData.ctc_link || '');
+      } else if (team === 'Lucky Charms' && existingData.collected_lc) {
+        setName(existingData.lc_name || '');
+        setImageLink(existingData.lc_link || '');
+      } else {
+        setName('');
+        setImageLink('');
+      }
+    } else {
+      setName('');
+      setImageLink('');
+    }
+  }, [existingData, open, team]);
+
+  const validateForm = () => {
+    const newErrors = {
+      name: !name.trim(),
+      imageLink: !imageLink.trim()
+    };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(error => error);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // Prevent default form submission
+
+    if (!validateForm()) {
+      return; // Stop if validation fails
+    }
+
     try {
       if (!itemId) {
         throw new Error('No item ID provided');
@@ -35,9 +69,10 @@ export default function SubmitItem({ open, onClose, onSubmit, itemId }) {
       onSubmit(data);
       setName('');
       setImageLink('');
+      setErrors({ name: false, imageLink: false });
       onClose();
     } catch (error) {
-      alert(`Error submitting item: ${error.message}`);
+      console.log("Error submitting item");
     }
   };
 
@@ -54,68 +89,100 @@ export default function SubmitItem({ open, onClose, onSubmit, itemId }) {
         },
       }}
     >
-      <DialogTitle sx={{ color: 'white', textAlign: 'center' }}>Item Details</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          label="Item Name"
-          type="text"
-          fullWidth
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          sx={{ 
-            mb: 2,
-            '& .MuiInputBase-input': { color: 'white' },
-            '& .MuiInputLabel-root': { 
-              color: 'white',
-              '&.Mui-focused': { color: 'white' }
-            },
-            '& .MuiOutlinedInput-root': { 
-              '& fieldset': { borderColor: selectedTeam === 'Lucky Charms' ? 'purple' : 'orange' },
-              '&:hover fieldset': { borderColor: selectedTeam === 'Lucky Charms' ? 'purple' : 'orange' },
-              '&.Mui-focused fieldset': { borderColor: selectedTeam === 'Lucky Charms' ? 'purple' : 'orange' },
-            }
-          }}
-        />
-        <TextField
-          margin="dense"
-          label="Image Link"
-          type="text"
-          fullWidth
-          value={imageLink}
-          onChange={(e) => setImageLink(e.target.value)}
-          sx={{ 
-            '& .MuiInputBase-input': { color: 'white' },
-            '& .MuiInputLabel-root': { 
-              color: 'white',
-              '&.Mui-focused': { color: 'white' }
-            },
-            '& .MuiOutlinedInput-root': { 
-              '& fieldset': { borderColor: selectedTeam === 'Lucky Charms' ? 'purple' : 'orange' },
-              '&:hover fieldset': { borderColor: selectedTeam === 'Lucky Charms' ? 'purple' : 'orange' },
-              '&.Mui-focused fieldset': { borderColor: selectedTeam === 'Lucky Charms' ? 'purple' : 'orange' },
-            }
-          }}
-        />
-      </DialogContent>
+      <form onSubmit={handleSubmit}>
+        <DialogTitle sx={{ color: 'white', textAlign: 'center' }}>Item Details</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Item Name"
+            type="text"
+            required
+            fullWidth
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setErrors(prev => ({ ...prev, name: false }));
+            }}
+            error={errors.name}
+            helperText={errors.name ? 'Item name is required' : ''}
+            sx={{ 
+              mb: 2,
+              '& .MuiInputBase-input': { color: 'white' },
+              '& .MuiInputLabel-root': { 
+                color: errors.name ? 'error' : 'white',
+                '&.Mui-focused': { color: errors.name ? 'error' : 'white' }
+              },
+              '& .MuiFormHelperText-root': {
+                color: 'error'
+              },
+              '& .MuiOutlinedInput-root': { 
+                '& fieldset': { 
+                  borderColor: errors.name ? 'error' : (selectedTeam === 'Lucky Charms' ? 'purple' : 'orange')
+                },
+                '&:hover fieldset': { 
+                  borderColor: errors.name ? 'error' : (selectedTeam === 'Lucky Charms' ? 'purple' : 'orange')
+                },
+                '&.Mui-focused fieldset': { 
+                  borderColor: errors.name ? 'error' : (selectedTeam === 'Lucky Charms' ? 'purple' : 'orange')
+                },
+              }
+            }}
+          />
+          <TextField
+            margin="dense"
+            label="Image Link"
+            type="text"
+            required
+            fullWidth
+            value={imageLink}
+            onChange={(e) => {
+              setImageLink(e.target.value);
+              setErrors(prev => ({ ...prev, imageLink: false }));
+            }}
+            error={errors.imageLink}
+            helperText={errors.imageLink ? 'Image link is required' : ''}
+            sx={{ 
+              '& .MuiInputBase-input': { color: 'white' },
+              '& .MuiInputLabel-root': { 
+                color: errors.imageLink ? 'error' : 'white',
+                '&.Mui-focused': { color: errors.imageLink ? 'error' : 'white' }
+              },
+              '& .MuiFormHelperText-root': {
+                color: 'error'
+              },
+              '& .MuiOutlinedInput-root': { 
+                '& fieldset': { 
+                  borderColor: errors.imageLink ? 'error' : (selectedTeam === 'Lucky Charms' ? 'purple' : 'orange')
+                },
+                '&:hover fieldset': { 
+                  borderColor: errors.imageLink ? 'error' : (selectedTeam === 'Lucky Charms' ? 'purple' : 'orange')
+                },
+                '&.Mui-focused fieldset': { 
+                  borderColor: errors.imageLink ? 'error' : (selectedTeam === 'Lucky Charms' ? 'purple' : 'orange')
+                },
+              }
+            }}
+          />
+        </DialogContent>
 
-      <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
-        <Button 
-          onClick={handleSubmit}
-          variant="contained"
-          sx={{
-            backgroundColor: selectedTeam === 'Lucky Charms' ? 'purple' : 'orange',
-            color: selectedTeam === 'Lucky Charms' ? 'white' : 'black',
-            '&:hover': {
-              backgroundColor: selectedTeam === 'Lucky Charms' ? '#6a1b9a' : 'darkorange',
-            },
-            width: '120px',
-          }}
-        >
-          Submit
-        </Button>
-      </DialogActions>
+        <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
+          <Button 
+            type="submit"
+            variant="contained"
+            sx={{
+              backgroundColor: selectedTeam === 'Lucky Charms' ? 'purple' : 'orange',
+              color: selectedTeam === 'Lucky Charms' ? 'white' : 'black',
+              '&:hover': {
+                backgroundColor: selectedTeam === 'Lucky Charms' ? '#6a1b9a' : 'darkorange',
+              },
+              width: '120px',
+            }}
+          >
+            Submit
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 }

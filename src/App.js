@@ -38,12 +38,15 @@ function App() {
       try {
         const response = await fetch('http://localhost:5000/api/items');
         const data = await response.json();
-        // Update to store both collection states
         const collectedMap = {};
         data.forEach(item => {
           collectedMap[item.id] = {
             collected_ctc: item.collected_ctc,
-            collected_lc: item.collected_lc
+            collected_lc: item.collected_lc,
+            ctc_name: item.ctc_name,
+            ctc_link: item.ctc_link,
+            lc_name: item.lc_name,
+            lc_link: item.lc_link
           };
         });
         setCollectedItems(collectedMap);
@@ -66,7 +69,6 @@ function App() {
   };
 
   const handleItemSubmit = (itemDetails) => {
-    // Update the collectedItems state to reflect the new submission
     setCollectedItems(prev => {
       const currentItem = prev[itemDetails.id] || {};
       return {
@@ -74,7 +76,11 @@ function App() {
         [itemDetails.id]: {
           ...currentItem,
           collected_ctc: team === 'Cinnamon Toast Crunch' ? true : currentItem.collected_ctc,
-          collected_lc: team === 'Lucky Charms' ? true : currentItem.collected_lc
+          collected_lc: team === 'Lucky Charms' ? true : currentItem.collected_lc,
+          ctc_name: team === 'Cinnamon Toast Crunch' ? itemDetails.ctc_name : currentItem.ctc_name,
+          ctc_link: team === 'Cinnamon Toast Crunch' ? itemDetails.ctc_image : currentItem.ctc_link,
+          lc_name: team === 'Lucky Charms' ? itemDetails.lc_name : currentItem.lc_name,
+          lc_link: team === 'Lucky Charms' ? itemDetails.lc_image : currentItem.lc_link
         }
       };
     });
@@ -206,6 +212,8 @@ function App() {
           onClose={() => setIsSubmitDialogOpen(false)}
           onSubmit={handleItemSubmit}
           itemId={selectedItemId}
+          existingData={selectedItemId ? collectedItems[selectedItemId] : null}
+          team={team}
         />
       </Suspense>
     </Box>
