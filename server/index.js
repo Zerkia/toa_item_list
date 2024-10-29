@@ -11,35 +11,27 @@ app.use(cors());
 app.use(express.json());
 
 // Database configuration
-const pool = new Pool({
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME,
-});
-
-// Prepare the statements
-const preparedStatements = {
-  getAllItems: {
-    name: 'get-all-items',
-    text: 'SELECT * FROM items'
-  },
-  updateItem: {
-    name: 'update-item',
-    text: `
-      UPDATE items 
-      SET 
-        ctc_name = CASE WHEN $1 = 'Cinnamon Toast Crunch' THEN $3 ELSE ctc_name END,
-        ctc_link = CASE WHEN $1 = 'Cinnamon Toast Crunch' THEN $4 ELSE ctc_link END,
-        lc_name = CASE WHEN $1 = 'Lucky Charms' THEN $3 ELSE lc_name END,
-        lc_link = CASE WHEN $1 = 'Lucky Charms' THEN $4 ELSE lc_link END,
-        collected_ctc = CASE WHEN $1 = 'Cinnamon Toast Crunch' THEN true ELSE collected_ctc END,
-        collected_lc = CASE WHEN $1 = 'Lucky Charms' THEN true ELSE collected_lc END
-      WHERE id = $2
-      RETURNING *`
-  }
-};
+let pool;
+if (process.env.DATABASE_URL) {
+  // Check if it's the Render URL (contains 'render.com')
+  const isRenderDB = process.env.DATABASE_URL.includes('render.com');
+  
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: isRenderDB ? {
+      rejectUnauthorized: false
+    } : false
+  });
+} else {
+  // Use individual config variables for local development
+  pool = new Pool({
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+  });
+}
 
 // Database connection
 pool.connect()
@@ -54,10 +46,9 @@ pool.connect()
 // API endpoints
 app.get('/api/items', async (req, res) => {
   try {
-    const result = await pool.query(preparedStatements.getAllItems);
+    const result = await pool.query('SELECT * FROM items');
     res.json(result.rows);
   } catch (err) {
-    console.error('Error fetching items:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -66,18 +57,16 @@ app.post('/api/items', async (req, res) => {
   const { id, name, imageLink, team } = req.body;
   
   try {
-    // Validate inputs
-    if (!id || !name || !imageLink || !team) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Use prepared statement for update
-    const result = await pool.query(preparedStatements.updateItem, [
-      team,
-      id,
-      name,
-      imageLink
-    ]);
+    const updateQuery = `
+      UPDATE items 
+      SET 
+        ${team === 'Cinnamon Toast Crunch' ? 'ctc_name' : 'lc_name'} = $1,
+        ${team === 'Cinnamon Toast Crunch' ? 'ctc_link' : 'lc_link'} = $2,
+        ${team === 'Cinnamon Toast Crunch' ? 'collected_ctc' : 'collected_lc'} = true
+      WHERE id = $3
+      RETURNING *`;
+    
+    const result = await pool.query(updateQuery, [name, imageLink, id]);
     
     if (result.rows.length === 0) {
       return res.status(404).json({ error: `Item not found with id: ${id}` });
@@ -85,15 +74,8 @@ app.post('/api/items', async (req, res) => {
     
     res.json(result.rows[0]);
   } catch (err) {
-    console.error('Error updating item:', err);
     res.status(500).json({ error: 'Server error' });
   }
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something broke!' });
 });
 
 app.listen(port, () => {
