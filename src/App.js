@@ -35,7 +35,8 @@ function App() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/items');
+        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+        const response = await fetch(`${API_URL}/api/items`);
         const data = await response.json();
         const collectedMap = {};
         data.forEach(item => {

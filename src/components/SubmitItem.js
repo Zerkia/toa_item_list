@@ -47,7 +47,8 @@ export default function SubmitItem({ open, onClose, onSubmit, itemId, existingDa
         throw new Error('No item ID provided');
       }
 
-      const response = await fetch('http://localhost:5000/api/items', {
+      const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${API_URL}/api/items`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

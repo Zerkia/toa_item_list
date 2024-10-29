@@ -6,9 +6,32 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+// Enhanced CORS configuration
+app.use(cors({
+  origin: [
+    'https://toa-item-list.onrender.com',
+    'https://toa-item-list-db.onrender.com',
+    'http://localhost:3000',
+    'http://localhost:5000'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json());
+
+// Add error logging middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ error: 'Server error', details: err.message });
+});
+
+// Add request logging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - ${new Date().toISOString()}`);
+  next();
+});
 
 // Database configuration
 let pool;
@@ -56,6 +79,8 @@ app.get('/api/items', async (req, res) => {
 app.post('/api/items', async (req, res) => {
   const { id, name, imageLink, team } = req.body;
   
+  console.log('Received request:', { id, name, imageLink, team });
+  
   try {
     const updateQuery = `
       UPDATE items 
@@ -66,15 +91,19 @@ app.post('/api/items', async (req, res) => {
       WHERE id = $3
       RETURNING *`;
     
+    console.log('Executing query with values:', [name, imageLink, id]);
     const result = await pool.query(updateQuery, [name, imageLink, id]);
     
     if (result.rows.length === 0) {
+      console.log(`No item found with id: ${id}`);
       return res.status(404).json({ error: `Item not found with id: ${id}` });
     }
     
+    console.log('Successfully updated item:', result.rows[0]);
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('Database error:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 });
 
