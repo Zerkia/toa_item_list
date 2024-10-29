@@ -54,7 +54,15 @@ function App() {
         console.error('Error fetching items:', error);
       }
     };
+
+    // Initial fetch
     fetchItems();
+
+    // Set up 10-minute interval
+    const interval = setInterval(fetchItems, 10 * 60 * 1000);
+
+    // Cleanup on unmount
+    return () => clearInterval(interval);
   }, []);
 
   const handleTeamSelection = (selectedTeam) => {
