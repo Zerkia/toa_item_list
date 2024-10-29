@@ -10,7 +10,7 @@ const port = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'https://toa-item-list.onrender.com',
-    'https://toa-item-list-db.onrender.com',
+    'https://toa-item-list-test.onrender.com',
     'http://localhost:3000',
     'http://localhost:5000'
   ],
