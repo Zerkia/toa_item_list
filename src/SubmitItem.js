@@ -1,17 +1,44 @@
 import React, { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 
-export default function SubmitItem({ open, onClose, onSubmit }) {
+export default function SubmitItem({ open, onClose, onSubmit, itemId }) {
   const [name, setName] = useState('');
   const [imageLink, setImageLink] = useState('');
 
   const selectedTeam = localStorage.getItem('selectedTeam');
 
-  const handleSubmit = () => {
-    onSubmit({ name, imageLink });
-    setName('');
-    setImageLink('');
-    onClose();
+  const handleSubmit = async () => {
+    try {
+      if (!itemId) {
+        throw new Error('No item ID provided');
+      }
+
+      const response = await fetch('http://localhost:5000/api/items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: itemId,
+          name,
+          imageLink,
+          team: selectedTeam
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(`Failed to submit item: ${data.error || response.statusText}`);
+      }
+
+      onSubmit(data);
+      setName('');
+      setImageLink('');
+      onClose();
+    } catch (error) {
+      alert(`Error submitting item: ${error.message}`);
+    }
   };
 
   return (
@@ -73,8 +100,6 @@ export default function SubmitItem({ open, onClose, onSubmit }) {
         />
       </DialogContent>
 
-      {/* TODO: Make submit button conditional between Submit and Delete button depending on if state is empty or not */}
-      {/* OPTIONAL: Add name to TeamSelect localStorage so that I can track changes to an item, in case of people deleting others items */}
       <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
         <Button 
           onClick={handleSubmit}

@@ -8,12 +8,13 @@ import './App.css';
 import './fonts.css';
 
 function App() {
-  const [collectedItems, setCollectedItems] = useState({});
   const [team, setTeam] = useState(null);
+  const [images, setImages] = useState([]);
+  const [collectedItems, setCollectedItems] = useState({});
   const [openTeamDialog, setOpenTeamDialog] = useState(false);
   const [openItemDialog, setOpenItemDialog] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState(null);
-  const [images, setImages] = useState([]);
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
 
   useEffect(() => {
     const storedTeam = localStorage.getItem('selectedTeam');
@@ -32,6 +33,27 @@ function App() {
     loadImages();
   }, []);
 
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/items');
+        const data = await response.json();
+        // Update to store both collection states
+        const collectedMap = {};
+        data.forEach(item => {
+          collectedMap[item.id] = {
+            collected_ctc: item.collected_ctc,
+            collected_lc: item.collected_lc
+          };
+        });
+        setCollectedItems(collectedMap);
+      } catch (error) {
+        console.error('Error fetching items:', error);
+      }
+    };
+    fetchItems();
+  }, []);
+
   const handleTeamSelection = (selectedTeam) => {
     setTeam(selectedTeam);
     localStorage.setItem('selectedTeam', selectedTeam);
@@ -44,12 +66,23 @@ function App() {
   };
 
   const handleItemSubmit = (itemDetails) => {
-    console.log('Item details submitted:', itemDetails);
-    // Here you would typically update your state or send data to an API
-    setCollectedItems(prev => ({
-      ...prev,
-      [selectedItemId]: true
-    }));
+    // Update the collectedItems state to reflect the new submission
+    setCollectedItems(prev => {
+      const currentItem = prev[itemDetails.id] || {};
+      return {
+        ...prev,
+        [itemDetails.id]: {
+          ...currentItem,
+          collected_ctc: team === 'Cinnamon Toast Crunch' ? true : currentItem.collected_ctc,
+          collected_lc: team === 'Lucky Charms' ? true : currentItem.collected_lc
+        }
+      };
+    });
+  };
+
+  const handleImageClick = (imageId) => {
+    setSelectedItemId(imageId);
+    setIsSubmitDialogOpen(true);
   };
 
   return (
@@ -111,12 +144,18 @@ function App() {
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
-
-                      // TODO: Add team-specific gradient via conditional rendering, either purple, orange or both, depending on condition
-                      // background: collectedItems[image.id]
-                      //   ? 'linear-gradient(to right, rgba(128,0,128,0.75) 50%, rgba(73, 64, 52, 1) 50%)'
-                      //   : 'linear-gradient(to right, rgba(73, 64, 52, 1) 50%, rgba(255,165,0,0.75) 50%)',
                       overflow: 'hidden',
+                      background: (() => {
+                        const item = collectedItems[image.id] || {};
+                        if (item.collected_ctc && item.collected_lc) {
+                          return 'linear-gradient(to right, rgba(255,165,0,0.75) 50%, rgba(128,0,128,0.75) 50%)';
+                        } else if (item.collected_ctc) {
+                          return 'linear-gradient(to right, rgba(255,165,0,0.75) 50%, rgba(73, 64, 52, 1) 50%)';
+                        } else if (item.collected_lc) {
+                          return 'linear-gradient(to right, rgba(73, 64, 52, 1) 50%, rgba(128,0,128,0.75) 50%)';
+                        }
+                        return 'rgba(73, 64, 52, 1)';
+                      })(),
                     }}
                   >
                     <img 
@@ -128,16 +167,29 @@ function App() {
                         paddingTop: '10px',
                         paddingBottom: '10px',
                         objectFit: 'contain',
-                        opacity: collectedItems[image.id] ? 1 : 0.4,
+                        opacity: (() => {
+                          const item = collectedItems[image.id] || {};
+                          // Check if current team has collected the item based on full team name
+                          const isCollectedByCurrentTeam = team === 'Cinnamon Toast Crunch' 
+                            ? item.collected_ctc 
+                            : item.collected_lc;
+                          return isCollectedByCurrentTeam ? 1 : 0.4;
+                        })(),
                         transition: 'opacity 0.3s ease-in-out',
                         cursor: 'pointer',
                         userSelect: 'none',
                         WebkitUserDrag: 'none',
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
-                      onMouseLeave={(e) => e.currentTarget.style.opacity = collectedItems[image.id] ? '1' : '0.4'}
+                      onMouseLeave={(e) => {
+                        const item = collectedItems[image.id] || {};
+                        const isCollectedByCurrentTeam = team === 'Cinnamon Toast Crunch' 
+                          ? item.collected_ctc 
+                          : item.collected_lc;
+                        e.currentTarget.style.opacity = isCollectedByCurrentTeam ? '1' : '0.4';
+                      }}
                       loading="lazy"
-                      onClick={() => toggleCollected(image.id)}
+                      onClick={() => handleImageClick(image.id)}
                       draggable="false"
                       onDragStart={(e) => e.preventDefault()}
                     />
@@ -150,9 +202,10 @@ function App() {
 
         {/* Item Details Dialog */}
         <SubmitItem 
-          open={openItemDialog} 
-          onClose={() => setOpenItemDialog(false)}
+          open={isSubmitDialogOpen} 
+          onClose={() => setIsSubmitDialogOpen(false)}
           onSubmit={handleItemSubmit}
+          itemId={selectedItemId}
         />
       </Suspense>
     </Box>
