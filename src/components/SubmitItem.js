@@ -96,7 +96,7 @@ export default function SubmitItem({ open, onClose, onSubmit, itemId, existingDa
           <TextField
             autoFocus
             margin="dense"
-            label="Item Name"
+            label="Username"
             type="text"
             required
             fullWidth
@@ -106,7 +106,7 @@ export default function SubmitItem({ open, onClose, onSubmit, itemId, existingDa
               setErrors(prev => ({ ...prev, name: false }));
             }}
             error={errors.name}
-            helperText={errors.name ? 'Item name is required' : ''}
+            helperText={errors.name ? 'Username is required' : ''}
             sx={{ 
               mb: 2,
               '& .MuiInputBase-input': { color: 'white' },
