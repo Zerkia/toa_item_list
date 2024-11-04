@@ -1,8 +1,31 @@
-import React from 'react';
-import { Box, Typography, Tooltip } from '@mui/material';
+import React, { useMemo } from 'react';
+import { Box, Typography, Tooltip, LinearProgress } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 
 export default function CollectionLog({ images, collectedItems, team, onImageClick }) {
+  // Calculate collection progress for both teams
+  const progress = useMemo(() => {
+    const totalItems = images.length;
+    let ctcCount = 0;
+    let lcCount = 0;
+
+    Object.values(collectedItems).forEach(item => {
+      if (item.collected_ctc) ctcCount++;
+      if (item.collected_lc) lcCount++;
+    });
+
+    return {
+      ctc: {
+        count: ctcCount,
+        percentage: (ctcCount / totalItems) * 100
+      },
+      lc: {
+        count: lcCount,
+        percentage: (lcCount / totalItems) * 100
+      }
+    };
+  }, [collectedItems, images.length]);
+
   return (
     <Box
       sx={{
@@ -19,11 +42,32 @@ export default function CollectionLog({ images, collectedItems, team, onImageCli
           height: '15vh',
           width: '100%',
           display: 'flex',
-          justifyContent: 'center',
+          justifyContent: 'space-between',
           alignItems: 'center',
           borderBottom: '15px solid gold',
+          px: 4
         }}
       >
+        {/* CTC Progress */}
+        <Box sx={{ width: '250px', textAlign: 'center' }}>
+          <Typography color="orange" sx={{ mb: 1, fontSize: '1.5rem', textShadow: '1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>
+            CTC Items Collected: {progress.ctc.count}/{images.length}
+          </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={progress.ctc.percentage}
+            sx={{
+              height: 20,
+              border: '2px solid black',
+              backgroundColor: 'rgba(255,165,0,0.2)',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor: 'orange',
+              }
+            }}
+          />
+        </Box>
+
+        {/* Title */}
         <Typography 
           variant="h2" 
           component="h1" 
@@ -36,6 +80,25 @@ export default function CollectionLog({ images, collectedItems, team, onImageCli
         >
           ToA Collection Log
         </Typography>
+
+        {/* LC Progress */}
+        <Box sx={{ width: '250px', textAlign: 'center' }}>
+          <Typography color="purple" sx={{ mb: 1, fontSize: '1.5rem', textShadow: '1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>
+            LC Items Collected: {progress.lc.count}/{images.length}
+          </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={progress.lc.percentage}
+            sx={{
+              height: 20,
+              border: '2px solid black',
+              backgroundColor: 'rgba(128,0,128,0.2)',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor: 'purple',
+              }
+            }}
+          />
+        </Box>
       </Box>
       <Box
         sx={{
